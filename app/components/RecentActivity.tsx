@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Vote, VotePosition } from '@/lib/congress-api'
 import PartyBadge from './PartyBadge'
 
@@ -16,11 +15,10 @@ interface ActivityMember {
 }
 
 interface ActivityVote extends Vote {
-  member?: ActivityMember
+  member?: ActivityMember | null
 }
 
-const CACHE_KEY = 'ct:recent-activity:v1'
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
+const CACHE_KEY = 'ct:recent-activity:v2'
 
 const POSITION_STYLES: Record<VotePosition, string> = {
   Yes: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -41,9 +39,7 @@ function readCache(): ActivityVote[] | null {
     const raw = window.localStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as { ts: number; votes: ActivityVote[] }
-    if (!parsed?.votes) return null
-    // Cache never strictly "expires" — we still show it on failure, but we'll prefer fresh data after TTL
-    return parsed.votes
+    return parsed?.votes || null
   } catch {
     return null
   }
@@ -54,7 +50,7 @@ function writeCache(votes: ActivityVote[]) {
   try {
     window.localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), votes }))
   } catch {
-    // localStorage may be full or disabled — fail quietly
+    // localStorage may be full or disabled
   }
 }
 
@@ -63,7 +59,7 @@ export default function RecentActivity() {
   const [hydratedFromCache, setHydratedFromCache] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Layer 1: hydrate from localStorage immediately so users see the section instantly
+  // Layer 1: hydrate from localStorage on mount
   useEffect(() => {
     const cached = readCache()
     if (cached && cached.length > 0) {
@@ -73,63 +69,26 @@ export default function RecentActivity() {
     }
   }, [])
 
-  // Layer 2 + 3: fetch fresh data, fall back to all-time if last-7-days is empty.
-  // Never clears existing state on failure — stale data is better than empty.
+  // Layer 2 + 3: fetch from server-side API route. Never clears existing state on failure.
   useEffect(() => {
     let cancelled = false
 
     async function load() {
       try {
-        const sevenDaysAgo = new Date()
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-        const cutoff = sevenDaysAgo.toISOString().slice(0, 10)
-
-        let { data: voteRows } = await supabase
-          .from('votes')
-          .select('member_id, vote_date, vote_position, bill_title_plain, bill_title_raw, bill_id, congress, session, roll_call, bill_category')
-          .gte('vote_date', cutoff)
-          .neq('vote_position', 'Not Voting')
-          .order('vote_date', { ascending: false })
-          .limit(10)
-
-        if (!voteRows || voteRows.length === 0) {
-          const { data: fallback } = await supabase
-            .from('votes')
-            .select('member_id, vote_date, vote_position, bill_title_plain, bill_title_raw, bill_id, congress, session, roll_call, bill_category')
-            .neq('vote_position', 'Not Voting')
-            .order('vote_date', { ascending: false })
-            .limit(10)
-          voteRows = fallback || []
-        }
-
-        if (cancelled || !voteRows || voteRows.length === 0) {
-          setLoading(false)
-          return
-        }
-
-        const memberIds = Array.from(new Set(voteRows.map((v) => v.member_id)))
-        const { data: memberRows } = await supabase
-          .from('members')
-          .select('id, full_name, party_code, state, chamber, district')
-          .in('id', memberIds)
-
+        const res = await fetch('/api/recent-activity', { cache: 'no-store' })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
         if (cancelled) return
 
-        const byId: Record<string, ActivityMember> = {}
-        for (const m of (memberRows || []) as ActivityMember[]) byId[m.id] = m
-
-        const merged: ActivityVote[] = voteRows.map((v) => ({
-          ...(v as Vote),
-          member: byId[v.member_id],
-        }))
-
-        setVotes(merged)
-        writeCache(merged)
+        const fresh: ActivityVote[] = data.votes || []
+        if (fresh.length > 0) {
+          setVotes(fresh)
+          writeCache(fresh)
+        }
         setLoading(false)
       } catch (err) {
-        // Network failure, Supabase outage, etc. — keep whatever we already have on screen.
         console.warn('RecentActivity: fetch failed, keeping cached state', err)
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -137,7 +96,6 @@ export default function RecentActivity() {
     return () => { cancelled = true }
   }, [])
 
-  // Show the skeleton only when we have NO data at all (first visit ever, no cache, still loading)
   const showSkeleton = loading && !hydratedFromCache && votes.length === 0
   const showEmpty = !loading && votes.length === 0
 
