@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -oE \"app[\\\\\\\\\\\\\\\\/][a-zA-Z_/-]*\\\\.\\(tsx|ts|sql|js|css\\)\" C:/Users/venka/.claude/projects/C--Users-venka-congresstracker/509b3d25-af0b-41c5-bca8-43cad92332b2.jsonl)",
+      "Bash(grep -oE \"app\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\[a-zA-Z_/\\\\\\\\\\\\\\\\-]*\\\\.\\(tsx|ts|sql|js|css\\)\" C:/Users/venka/.claude/projects/C--Users-venka-congresstracker/509b3d25-af0b-41c5-bca8-43cad92332b2.jsonl)",
+      "Bash(grep -oE \"\\(file_path|filePath\\)\\\\\":\\\\\"[^\\\\\"]+\\\\\\\\.\\(tsx|ts|sql|js|css|json|md\\)\\\\\"\" C:/Users/venka/.claude/projects/C--Users-venka-congresstracker/509b3d25-af0b-41c5-bca8-43cad92332b2.jsonl)",
+      "Bash(grep -oE '\"text\":\"[^\"]{200,}\"' C:/Users/venka/.claude/projects/C--Users-venka-congresstracker/509b3d25-af0b-41c5-bca8-43cad92332b2.jsonl)",
+      "Bash(grep -oE '\"text\":\"[^\"]{500,}\"' C:/Users/venka/.claude/projects/C--Users-venka-congresstracker/509b3d25-af0b-41c5-bca8-43cad92332b2.jsonl)",
+      "Bash(npm run *)",
+      "Bash(grep -E \"vercel|README|\\\\.md$\")",
+      "Bash(curl -s -I http://localhost:3001)",
+      "Bash(curl -s http://localhost:3001/_next/static/css/app/layout.css)",
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(curl -s \"http://localhost:3001/_next/static/css/app/layout.css?v=1777329256717\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 23836 //F)",
+      "Bash(taskkill //PID 11356 //F)",
+      "Bash(taskkill //PID 9168 //F)",
+      "Bash(taskkill //PID 17336 //F)",
+      "Bash(taskkill //PID 7540 //F)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(grep -oE \"\\\\.px-\\(12|20|28|sm:px-20\\)|\\\\.lg\\\\\\\\\\\\\\\\:px-28|@media.*\\\\.lg\\\\\\\\\\\\\\\\:px-28|sm\\\\\\\\\\\\\\\\:px-20|lg\\\\\\\\\\\\\\\\:px-28\")",
+      "Bash(awk '{print $5}')",
+      "Bash(xargs -I{} taskkill //PID {} //F)"
+    ]
+  }
+}
