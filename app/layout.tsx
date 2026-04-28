@@ -2,6 +2,7 @@ import './globals.css'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Inter, Fraunces } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="text-gray-400">Non-partisan. Free. Open data.</span>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   )
